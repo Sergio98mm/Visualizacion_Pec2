@@ -1,0 +1,144 @@
+---
+title: 'RoseChart - Visualizacion'
+author: "Autor: Sergio Morales Machado"
+date: "Noviembre 2023"
+output:
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+  word_document: default
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+---
+
+# Rose Chart
+
+Vamos a cargar el archivo de datos
+
+```{r}
+path = 'hotel_reservations.csv'
+hotel_reservations <- read.csv(path, row.names=NULL)
+```
+
+
+```{r}
+hotel_reservations_2018 <- hotel_reservations[hotel_reservations$arrival_year == 2018, ]
+hotel_reservations_2018 <- hotel_reservations_2018[hotel_reservations_2018$booking_status == 'Not_Canceled', ]
+```
+
+
+```{r}
+frecuency_month <- sapply(1:12, function(month) {
+  sum(hotel_reservations_2018$arrival_month == month)
+})
+
+print(frecuency_month)
+```
+
+
+```{r}
+if (!require("ggplot2")) install.packages("ggplot2"); library(ggplot2)
+
+month_name <- factor(c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"))
+frecuencia <- c(5, 12, 8, 15, 20, 10, 6, 18, 22, 14, 9, 11)
+
+data <- data.frame(month_name, frecuency_month)
+
+ggplot(data, aes(x = month_name, y = frecuency_month, fill = month_name)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar(start = 0) +
+  theme_minimal() +
+  labs(title = "Reservas de hoteles por mes 2018",
+       x = "Meses",
+       y = "Frecuencia",
+       fill = "Mes")
+```
+
+
+
+
+
+# Bubble Chart
+
+
+Vamos a cargar el archivo de datos
+
+```{r}
+path_bubble = 'world_population.csv'
+population <- read.csv(path_bubble, row.names=NULL)
+population$Continent <- factor(population$Continent)
+
+```
+
+
+```{r Fig3, echo=TRUE,fig.height=10, fig.width = 15}
+
+if (!require("ggplot2")) install.packages("ggplot2"); library(ggplot2)
+if (!require("plotly")) install.packages("plotly"); library(plotly)
+if (!require("viridis")) install.packages("viridis"); library(viridis)
+
+plotly_chart <- ggplotly(
+  ggplot(population, aes(x = X2022.Population, y = Area..km.., size = World.Population.Percentage, color = Continent,
+                         text =   paste("Pais: ", Country.Territory, "<br>",
+                                      "Poblacion 2022: ", X2022.Population, "<br>",
+                                      "Area en km2: ", Area..km.., "<br>",
+                                      "Continente: ", Continent, "<br>",
+                                      "Porcentaje Poblacion Mundial: ", World.Population.Percentage))) +
+    geom_point(alpha = 0.7) +
+    scale_size_continuous(range = c(3, 10)) +
+    scale_color_discrete(name = "Continente") +
+    labs(title = "Poblacion mundial vs Area (km2)")  +
+    xlab("Poblacion 2022 en Millones (M)") +
+    ylab("Area en km2") + 
+    scale_x_continuous(labels = scales:::label_number(scale = 1e-6)) + 
+    scale_y_continuous(labels = scales::label_number()) +  
+    theme_minimal(),
+  tooltip = "text"
+)
+
+plotly_chart
+```
+
+# Force Directed-Graph
+
+
+```{r Fig4, echo=TRUE,fig.height=20, fig.width = 20}
+
+if (!require("igraph")) install.packages("igraph"); library(igraph)
+if (!require("dplyr")) install.packages("dplyr"); library(dplyr)
+
+path_graph = 'routes.csv'
+routes <- read.csv(path_graph, row.names = NULL)
+#routes <- head(read.csv(path_graph, row.names = NULL), 1000)
+
+routes <- subset(routes, source.airport.id != "\\N")
+routes <- subset(routes, destination.airport.id != "\\N")
+
+routes_data <- data.frame (
+  init = as.numeric(routes$source.airport.id),
+  end = as.numeric(routes$destination.airport.id)
+)
+
+graph_routes <- graph.data.frame(routes_data, directed = TRUE)
+
+plot(graph_routes, 
+     main = "Grafo de Vuelos", 
+     #vertex.label = V(graph_routes)$name, 
+     vertex.label = NA,  
+     vertex.size = 5, 
+     edge.arrow.size = 0.5)
+
+```
+
+
+
+
+
+
+
+
+
